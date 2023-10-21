@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 /**
  * Get the size in bytes of the given opened file
@@ -21,7 +22,7 @@ long get_file_size(FILE *fptr) {
  * 
  * @return a pointer to the beginning of the data, NULL if the file cannot be read.
 */
-char* read_file(char* filename, int compression, int verbose) {
+char* read_file(char* filename) {
     FILE *fptr = fopen(filename, "r");
     // Return null if the file cant be opened
     if(fptr == NULL) {
