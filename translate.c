@@ -167,17 +167,23 @@ int translate(char *code, char *file) {
                 write_loop_open(fptr, numLoops);
                 stack_push(loopStack, numLoops++);
             } else {
+                free(loopStack);
                 return ERROR_STACK_OVERFLOW;
             }
         } else if(code[i] == ']') {
             if(!stack_is_empty(loopStack)) {
                 write_loop_close(fptr, stack_pop(loopStack));
             } else {
+                free(loopStack);
                 return ERROR_UNMATCHED_LOOP;
             }
         } else {
             translate_instruction(code[i], repeats, fptr);
         }
+    }
+    if(!stack_is_empty(loopStack)) {
+        free(loopStack);
+        return ERROR_UNCLOSED_LOOP;
     }
     free(loopStack);
 
