@@ -2,4 +2,4 @@
 
 #include <stdio.h>
 
-char* read_file(char* filename);
+char *read_file(char* filename);

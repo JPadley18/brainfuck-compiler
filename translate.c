@@ -24,6 +24,7 @@ void write_instruction(FILE *fptr, char *instruction) {
 */
 void write_header(FILE *fptr) {
     fprintf(fptr, "global _start\n\nsection .text\n\n_start:\n");
+    write_instruction(fptr, "mov ebx, cells");
 }
 
 /**
@@ -36,6 +37,24 @@ void write_footer(FILE *fptr) {
     write_instruction(fptr, "mov eax, 1");
     write_instruction(fptr, "mov ebx, 0");
     write_instruction(fptr, "int 0x80");
+    // Write getchar procedure
+    fprintf(fptr, "getchar:\n");
+    write_instruction(fptr, "mov ecx, ebx");
+    write_instruction(fptr, "mov eax, 3");
+    write_instruction(fptr, "mov ebx, 0");
+    write_instruction(fptr, "mov edx, 1");
+    write_instruction(fptr, "int 0x80");
+    write_instruction(fptr, "mov ebx, ecx");
+    write_instruction(fptr, "ret");
+    // Write putchar procedure
+    fprintf(fptr, "putchar:\n");
+    write_instruction(fptr, "mov ecx, ebx");
+    write_instruction(fptr, "mov eax, 4");
+    write_instruction(fptr, "mov ebx, 1");
+    write_instruction(fptr, "mov edx, 1");
+    write_instruction(fptr, "int 0x80");
+    write_instruction(fptr, "mov ebx, ecx");
+    write_instruction(fptr, "ret");
     // Write .bss section
     fprintf(fptr, "\nsection .bss\n");
     write_instruction(fptr, "cells: resb 30000");
@@ -69,6 +88,14 @@ void translate_instruction(char c, int repeats, FILE *fptr) {
             snprintf(line, sizeof(line), "add ebx, %d", repeats);
             write_instruction(fptr, line);
             break;
+        case '.':
+            write_instruction(fptr, "call putchar");
+            break;
+        case ',':
+            write_instruction(fptr, "call getchar");
+            break;
+        default:
+            return;
     }
 }
 

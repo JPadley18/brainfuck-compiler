@@ -1,4 +1,5 @@
-bf
+bfc
 .vscode/
 *.bf
 *.asm
+*.o
