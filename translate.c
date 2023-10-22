@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "errors.h"
+#include "stack.h"
 
 // Maximum number of nested loops allowed
 #define MAX_LOOP_DEPTH 1024
 // Size of buffer for reading numbers
 #define NUM_BUF_SIZE 32
+// Size of loop ID buffer
+#define NAME_BUF_SIZE 64
 
 /**
  * Writes a single assembly instruction to the given file
@@ -81,7 +84,7 @@ void translate_instruction(char c, int repeats, FILE *fptr) {
             write_instruction(fptr, line);
             break;
         case '<':
-            snprintf(line, sizeof(line), "add ebx, %d", repeats);
+            snprintf(line, sizeof(line), "sub ebx, %d", repeats);
             write_instruction(fptr, line);
             break;
         case '>':
@@ -97,6 +100,33 @@ void translate_instruction(char c, int repeats, FILE *fptr) {
         default:
             return;
     }
+}
+
+/**
+ * Write the assembly to begin a loop to the given file
+ * 
+ * @param fptr the file to write to
+ * @param loopNum the numeric ID of the loop to open
+*/
+void write_loop_open(FILE *fptr, int loopNum) {
+    fprintf(fptr, "loop%d:\n", loopNum);
+    write_instruction(fptr, "cmp byte [ebx], 0");
+    char cont[NAME_BUF_SIZE + 7];
+    snprintf(cont, NAME_BUF_SIZE + 7, "jz cont%d", loopNum);
+    write_instruction(fptr, cont);
+}
+
+/**
+ * Write the assembly to close a loop to the given file
+ * 
+ * @param fptr the file to write to
+ * @param loopNum the numeric ID of the loop to close
+*/
+void write_loop_close(FILE *fptr, int loopNum) {
+    char jmp[NAME_BUF_SIZE + 8];
+    snprintf(jmp, NAME_BUF_SIZE + 8, "jmp loop%d", loopNum);
+    write_instruction(fptr, jmp);
+    fprintf(fptr, "cont%d:\n", loopNum);
 }
 
 /**
@@ -118,6 +148,8 @@ int translate(char *code, char *file) {
     // Step through each instruction
     int numPtr = 0;
     char numBuf[NUM_BUF_SIZE];
+    int numLoops = 0;
+    Stack *loopStack = create_stack(MAX_LOOP_DEPTH);
     for(int i = 0; code[i] != '\0'; i++) {
         // If reading a number, read whole number
         int repeats = 1;
@@ -130,8 +162,24 @@ int translate(char *code, char *file) {
             repeats = atoi(numBuf);
             numPtr = 0;
         }
-        translate_instruction(code[i], repeats, fptr);
+        if(code[i] == '[') {
+            if(!stack_is_full(loopStack)) {
+                write_loop_open(fptr, numLoops);
+                stack_push(loopStack, numLoops++);
+            } else {
+                return ERROR_STACK_OVERFLOW;
+            }
+        } else if(code[i] == ']') {
+            if(!stack_is_empty(loopStack)) {
+                write_loop_close(fptr, stack_pop(loopStack));
+            } else {
+                return ERROR_UNMATCHED_LOOP;
+            }
+        } else {
+            translate_instruction(code[i], repeats, fptr);
+        }
     }
+    free(loopStack);
 
     write_footer(fptr);
     fclose(fptr);
