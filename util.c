@@ -34,6 +34,7 @@ char* read_file(char* filename) {
     size_t n = fread(buffer, size, 1, fptr);
     if(n < 1) {
         fclose(fptr);
+        free(buffer);
         return NULL;
     }
     buffer[size] = 0;

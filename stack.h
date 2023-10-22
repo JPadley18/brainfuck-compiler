@@ -13,3 +13,4 @@ int stack_pop(Stack *stack);
 void stack_push(Stack *stack, int item);
 bool stack_is_full(Stack *stack);
 bool stack_is_empty(Stack *stack);
+void free_stack(Stack *stack);

@@ -49,3 +49,13 @@ bool stack_is_full(Stack *stack) {
 bool stack_is_empty(Stack *stack) {
     return stack->top == 0;
 }
+
+/**
+ * Free the memory associated with the given stack
+ * 
+ * @param stack the stack to free
+*/
+void free_stack(Stack *stack) {
+    free(stack->stack);
+    free(stack);
+}

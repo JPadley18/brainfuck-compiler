@@ -167,14 +167,14 @@ int translate(char *code, char *file) {
                 write_loop_open(fptr, numLoops);
                 stack_push(loopStack, numLoops++);
             } else {
-                free(loopStack);
+                free_stack(loopStack);
                 return ERROR_STACK_OVERFLOW;
             }
         } else if(code[i] == ']') {
             if(!stack_is_empty(loopStack)) {
                 write_loop_close(fptr, stack_pop(loopStack));
             } else {
-                free(loopStack);
+                free_stack(loopStack);
                 return ERROR_UNMATCHED_LOOP;
             }
         } else {
@@ -182,10 +182,10 @@ int translate(char *code, char *file) {
         }
     }
     if(!stack_is_empty(loopStack)) {
-        free(loopStack);
+        free_stack(loopStack);
         return ERROR_UNCLOSED_LOOP;
     }
-    free(loopStack);
+    free_stack(loopStack);
 
     write_footer(fptr);
     fclose(fptr);
