@@ -2,11 +2,7 @@
 #include <stdlib.h>
 #include "util.h"
 #include "optimize.h"
-
-// Number of byte cells to give Brainfuck executable
-#define NUM_CELLS 30000
-// Maximum number of nested loops allowed
-#define MAX_LOOP_DEPTH 1024
+#include "translate.h"
 
 int main() {
     // open brainfuck code
@@ -18,9 +14,11 @@ int main() {
     char *compressed = compress(minified);
     free(minified);
 
-    printf("%s\n", compressed);
-    free(compressed);
     // translate
+    int err = translate(compressed, "test.asm");
+    free(compressed);
+
+    printf("Finished with code %d\n", err);
     // assemble
     // link
 }
