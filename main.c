@@ -7,6 +7,10 @@
 int main() {
     // open brainfuck code
     char *code = read_file("test.bf");
+    if(code == NULL) {
+        printf("Error reading input file\n");
+        exit(1);
+    }
     // minify
     char *minified = minify(code);
     free(code);

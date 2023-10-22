@@ -31,7 +31,11 @@ char* read_file(char* filename) {
     // Allocate a buffer to store the file contents + a null char at the end
     long size = get_file_size(fptr);
     char *buffer = malloc(size + 1);
-    fread(buffer, size, 1, fptr);
+    size_t n = fread(buffer, size, 1, fptr);
+    if(n < 1) {
+        fclose(fptr);
+        return NULL;
+    }
     buffer[size] = 0;
     fclose(fptr);
 

@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "errors.h"
 
 // Maximum number of nested loops allowed
 #define MAX_LOOP_DEPTH 1024
+// Size of buffer for reading numbers
+#define NUM_BUF_SIZE 32
 
 /**
  * Writes a single assembly instruction to the given file
@@ -39,6 +42,37 @@ void write_footer(FILE *fptr) {
 }
 
 /**
+ * Translate one character of Brainfuck into assembly
+ * 
+ * @param c the character to translate
+ * @param repeats the number of times to repeat the instruction
+ * @param fptr the file to translate into
+ * 
+ * @return an error code if one occurred, else 0
+*/
+void translate_instruction(char c, int repeats, FILE *fptr) {
+    char line[NUM_BUF_SIZE + 16];
+    switch(c) {
+        case '+':
+            snprintf(line, sizeof(line), "add byte [ebx], %d", repeats);
+            write_instruction(fptr, line);
+            break;
+        case '-':
+            snprintf(line, sizeof(line), "sub byte [ebx], %d", repeats);
+            write_instruction(fptr, line);
+            break;
+        case '<':
+            snprintf(line, sizeof(line), "add ebx, %d", repeats);
+            write_instruction(fptr, line);
+            break;
+        case '>':
+            snprintf(line, sizeof(line), "add ebx, %d", repeats);
+            write_instruction(fptr, line);
+            break;
+    }
+}
+
+/**
  * Translate the given Brainfuck code into assembly and write to the given file
  * Supports run-length encoded Brainfuck
  * 
@@ -54,7 +88,23 @@ int translate(char *code, char *file) {
     }
     write_header(fptr);
 
-    // Assemble here
+    // Step through each instruction
+    int numPtr = 0;
+    char numBuf[NUM_BUF_SIZE];
+    for(int i = 0; code[i] != '\0'; i++) {
+        // If reading a number, read whole number
+        int repeats = 1;
+        if(code[i] >= '0' && code[i] <= '9') {
+            numBuf[numPtr++] = code[i];
+            continue;
+        } else if(numPtr > 0) {
+            // If a number is stored, use it as repeats for next instruction
+            numBuf[numPtr] = 0;
+            repeats = atoi(numBuf);
+            numPtr = 0;
+        }
+        translate_instruction(code[i], repeats, fptr);
+    }
 
     write_footer(fptr);
     fclose(fptr);
