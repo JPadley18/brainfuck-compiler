@@ -149,6 +149,7 @@ int translate(char *code, char *file) {
     int numPtr = 0;
     char numBuf[NUM_BUF_SIZE];
     int numLoops = 0;
+    int err = SUCCESS;
     Stack *loopStack = create_stack(MAX_LOOP_DEPTH);
     for(int i = 0; code[i] != '\0'; i++) {
         // If reading a number, read whole number
@@ -167,27 +168,33 @@ int translate(char *code, char *file) {
                 write_loop_open(fptr, numLoops);
                 stack_push(loopStack, numLoops++);
             } else {
-                free_stack(loopStack);
-                return ERROR_STACK_OVERFLOW;
+                err = ERROR_STACK_OVERFLOW;
+                break;
             }
         } else if(code[i] == ']') {
             if(!stack_is_empty(loopStack)) {
                 write_loop_close(fptr, stack_pop(loopStack));
             } else {
-                free_stack(loopStack);
-                return ERROR_UNMATCHED_LOOP;
+                err = ERROR_UNMATCHED_LOOP;
+                break;
             }
         } else {
             translate_instruction(code[i], repeats, fptr);
         }
     }
     if(!stack_is_empty(loopStack)) {
-        free_stack(loopStack);
-        return ERROR_UNCLOSED_LOOP;
+        err = ERROR_UNCLOSED_LOOP;
     }
     free_stack(loopStack);
 
-    write_footer(fptr);
-    fclose(fptr);
-    return SUCCESS;
+    if(err != SUCCESS) {
+        fclose(fptr);
+        if(remove(file)) {
+            printf("Failed to cleanup output file after error\n");
+        }
+    } else {
+        write_footer(fptr);
+        fclose(fptr);
+    }
+    return err;
 }
